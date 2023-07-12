@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useEffect, useState } from 'react';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
@@ -10,9 +10,11 @@ import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
 import Modal from '@mui/material/Modal';
 import Box from '@mui/material/Box';
+import useAjax from './hooks/useAjax';
 
-import data from './data/data'
 import { Typography } from '@mui/material';
+import { useAppDispatch, useAppSelector } from './hooks/redux';
+import { deleteProducts, fetchProducts } from './store/reducers/products';
 
 const style = {
   position: 'absolute' as 'absolute',
@@ -26,16 +28,29 @@ const style = {
   p: 4,
 };
 
+
+
 function App() {
-  const [open, setOpen] = React.useState(false);
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const dispatch = useAppDispatch();
+  const products = useAppSelector((state) => state.products.product);
+  const alert = useAppSelector((state) => state.products.alert)
   
-console.log(data);
-  const toReturn = data.map((item) => {
-    return (
-    <ListItem sx={{boxShadow: 1}} >
-      <ListItemAvatar>
+  // vérifie l'état de la BDD et met à jour
+  useEffect(() => {
+    dispatch(fetchProducts());
+  },
+  [dispatch])  
+
+
+const handleClickDelete = (id) => () => {
+  dispatch(deleteProducts(id));
+}
+
+const toReturn = products.map((item) => {
+     return (
+    
+    <ListItem sx={{boxShadow: 1}} key={item._id}>
+      <ListItemAvatar>  
         <Avatar>
           <PhoneIphoneIcon  />
         </Avatar>
@@ -49,29 +64,20 @@ console.log(data);
         <p >{item.warranty_years}</p>
         {item.available ? <Button variant="outline">Buy</Button> : <Button disabled> <DoNotDisturbAltIcon /> </Button>}
         <Button variant="outline">Update</Button>
-        <Button onClick={handleOpen} variant="outline">Delete</Button>
+        <Button variant="outline" onClick={handleClickDelete(item._id)}>Delete</Button>
       </Stack>
     </ListItem>
-    )
+    ) 
   })
 
   return (
     <> 
-    <h1> Available product</h1>
+    {alert && <p>{alert.message}</p>}
+    <h1> Available products</h1>
     <Button variant="contained">Add a product</Button>
     <List sx={{ width: '100%' }}>
       <Stack spacing={2}>{toReturn}</Stack>
     </List>
-    <Modal 
-      open={open}
-      onClose={handleClose}
->
-   <Box sx={{...style, width: 400 }}>
-    <p>
-      Etes vous sur de supprimer?
-    </p>
-    </Box>
-    </Modal>
     </>
 
   )
